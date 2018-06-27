@@ -1,0 +1,6 @@
+*** rewrite a simple lexical and parser tools in python
+    #+BEGIN_SRC python
+      # you need define keywords and operators and operator table
+      # vtype.py is a simple type 
+
+    #+END_SRC
