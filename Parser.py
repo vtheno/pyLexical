@@ -20,7 +20,7 @@ operators = [ ]
 keywords = ["if","then","else"]
 def IsVariable( s : str ) -> bool:
     return s not in keywords and s not in operators
-def parseAtom( toks : List(str) ) -> Tuple(Expr,List(str)):
+def parseAtom( toks : List(str) ) -> Tuple(Tuple(str,object),List(str)) :
     t,rest = unpack(toks)
     if IsVariable(t):
         return ( ("Sym",t),rest )
@@ -37,7 +37,14 @@ def parseExpr( toks ):
 def parseRest( exp1,toks ):
     # if xx 
     # else =>
-    return (exp1,toks)
+    if toks == [ ]:
+        return (exp1,toks)
+    x,xs = unpack(toks)
+    if x == "+":
+        exp2,rest = parseExpr(xs)
+        return ( ("PLUS",exp1,exp2) , rest)
+    else:
+        return (exp1,toks)
 def parse(inp):
     return parseExpr( Lex(SpecTab,inp) )
 def read(inps):
@@ -48,8 +55,8 @@ def read(inps):
         raise ParseError( "no parse all: {}".format(implode(rest)) )
 inp = """
 if a 
-then b
-else c
+then b + a
+else c + a
 """
 print( read(inp) )
 
