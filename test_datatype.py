@@ -31,20 +31,22 @@ def test1():
 test1()
 class Nat(metaclass=TypeMeta): pass
 class Zero(Nat):
-    @classmethod
+    @class_prop
     def eval(cls):
         return 0
 
 class Succ(Nat):
     def __init__(self,o):
         self.o = o
-
+    @prop
     def eval(self):
-        return 1 + self.o.eval()
+        return 1 + self.o.eval
     def __repr__(self):
         return "{} {}".format(self.__name__,self.o)
 
 one = Succ(Zero)
+two = Succ(one)
+three = Succ(Succ(Succ(Zero)))
 print( Zero )
 assert isinstance(Zero,Nat) is True
 assert isinstance(one,Nat) is True
@@ -52,5 +54,8 @@ assert isinstance(one,Succ) is True
 assert isinstance(Zero,Succ) is False
 assert isinstance(one,Zero) is False
 assert isinstance(Zero,Zero) is False
-print( Zero.__subs__ )
-print( one.eval() )
+print( Nat.__subs__ )
+print( one.eval )
+print( two.eval )
+print( three.eval )
+print( dir(Nat) )

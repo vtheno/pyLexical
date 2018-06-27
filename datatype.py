@@ -25,4 +25,33 @@ class TypeMeta(type):
         return False
     def __repr__(self):
         return self.__name__
-__all__ = ["TypeMeta"]
+class species(object):
+    def __init__(self,func):
+        self.func = func
+    def __get__(self,obj,typ=None):
+        def wrapper(*args,**kw):
+            return self.func(typ,*args,**kw)
+        return wrapper
+class static(object):
+    def __init__(self,func):
+        self.func = func
+    def __get__(self,obj,typ=None):
+        def wrapper(*args,**kw):
+            return self.func(*args,**kw)
+        return wrapper
+class prop(object):
+    def __init__(self,func):
+        self.func = func
+    def __get__(self,obj,typ=None):
+        def wrapper(*args,**kw):
+            return self.func(obj,*args,**kw)
+        return wrapper()
+class class_prop(object):
+    def __init__(self,func):
+        self.func = func
+    def __get__(self,obj,typ=None):
+        def wrapper(*args,**kw):
+            return self.func(typ,*args,**kw)
+        return wrapper()
+
+__all__ = ["TypeMeta","species","static","prop","class_prop"]
