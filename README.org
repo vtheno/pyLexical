@@ -1,7 +1,8 @@
-*** rewrite a simple lexical and parser tools in python
+*** rewrite a simple lexical and parser tools in python.
     #+BEGIN_SRC python
       # you need define keywords and operators and operator table
       # vtype.py is a simple type 
       # this is learning how compile to python bytecode
       # learning from https://github.com/nickdrozd/LispPyByCompyler
     #+END_SRC
+*** learning a simple program language how compile to python bytecode
