@@ -38,7 +38,7 @@ class Instruction(metaclass=TypeMeta):
         self.varnames = set( )
         self.filename = '<Inst>'
         self.name = name
-        self.firstlineno = 0
+        self.firstlineno = 1
         self.lnotab = b''
         self.freevars = ()
         self.cellvars = ()
@@ -46,10 +46,9 @@ class Instruction(metaclass=TypeMeta):
         self.converts()
         self.getIndexs()
         self.LabelConvert()
+        self.nlocals = len(self.varnames)
+        # varnames is local variable names and function arguments
         self.code += [opmap["RETURN_VALUE"],0]
-        #print( 'makeCode:',self.code,len(self.code) )
-        #print( self.consts,self.names,
-        #       self.varnames,self.freevars,self.cellvars )
         code = CodeType(self.argcount,       # argcount
                         self.kwonlyargcount, # kwonlyargcount
                         self.nlocals,        # nlocals
@@ -114,8 +113,8 @@ class NumInst(Instruction):
         self.consts = (num,)
         def numIndex(consts):
             return consts.index(num)
-        self.code = [opmap["LOAD_CONST"],numIndex,
-                     opmap["NOP"],opmap["NOP"]]
+        self.code = [opmap["LOAD_CONST"],numIndex]
+#                     opmap["NOP"],opmap["NOP"]]
 class SymInst(Instruction):
     def __init__(self,sym):
         super(SymInst,self).__init__()
@@ -127,8 +126,8 @@ class SymInst(Instruction):
             else:
                 print( ' undefine variable ')
                 return names.index('DUMMY')
-        self.code = [opmap["LOAD_GLOBAL"],symIndex,
-                     opmap["NOP"],opmap["NOP"]]
+        self.code = [opmap["LOAD_GLOBAL"],symIndex]
+#                     opmap["NOP"],opmap["NOP"]]
 class BinopInst(Instruction):
     tables = {
         '+':opmap["BINARY_ADD"],
@@ -182,11 +181,11 @@ class ValInst(Instruction):
         self.cellvars = val.freevars
         self.stacksize = 2
         self.names = val.names
-        self.names.add(sym)
+        self.names.update(sym)
         def symIndex(names):
             return names.index(sym)
         self.code = val.code + \
-                    [ opmap["DUP_TOP"],0,
+                    [ opmap["DUP_TOP"],0,# copy top of stack
                       opmap["STORE_GLOBAL"],symIndex,
                       opmap["LOAD_GLOBAL"],symIndex ]
 __all__ = ["SymInst","NumInst",

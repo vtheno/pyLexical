@@ -107,14 +107,33 @@ print( p,"\noutput:",multStepEval(p) )
 """
 from instructions import makefunc
 p = read("""
-if val a = 2 
-then val b = a + 1
-else val c = a + 2
+if val a = 1
+then val b = a + 2 
+else val c = b + 3
 """)
 o = multStepEval(p)
 print( p ,"\noutput:",o )
 env = {}#{'a':True,'b':1,'c':2}
-print( makefunc(o.makeCode(),env )() )
+import dis
+code = o.makeCode()
+dis.show_code(code)
+print( makefunc(code,env )() )
+def genFile(filename,code):
+    import marshal
+    import struct
+    import time
+    import imp
+    import sys
+    magic_number = imp.get_magic()
+    gen_time     = struct.pack('i',int(time.time()))
+    padding      = bytes( [65,0,0,0] ) # 65 0 0 0
+    data         = marshal.dumps(code)
+    with open(filename,'wb') as f:
+        f.write(magic_number)
+        f.write(gen_time)
+        f.write(padding)
+        f.write(data)
+genFile('mylang.pyc',code)
 #print( isinstance(SYM("A"),SYM) )
 #print( isinstance(SYM("A"),IF) )
 #print( isinstance(SYM("A"),Expr) )
