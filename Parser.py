@@ -117,7 +117,8 @@ env = {}#{'a':True,'b':1,'c':2}
 import dis
 code = o.makeCode()
 dis.show_code(code)
-print( makefunc(code,env )() )
+ff = makefunc(code,env)
+print( ff() )
 def genFile(filename,code):
     import marshal
     import struct
@@ -133,7 +134,7 @@ def genFile(filename,code):
         f.write(gen_time)
         f.write(padding)
         f.write(data)
-genFile('mylang.pyc',code)
+genFile('mylang.pyc',ff.__code__)
 #print( isinstance(SYM("A"),SYM) )
 #print( isinstance(SYM("A"),IF) )
 #print( isinstance(SYM("A"),Expr) )

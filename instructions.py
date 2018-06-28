@@ -49,6 +49,7 @@ class Instruction(metaclass=TypeMeta):
         self.nlocals = len(self.varnames)
         # varnames is local variable names and function arguments
         self.code += [opmap["RETURN_VALUE"],0]
+        print( self.code )
         code = CodeType(self.argcount,       # argcount
                         self.kwonlyargcount, # kwonlyargcount
                         self.nlocals,        # nlocals
@@ -113,8 +114,8 @@ class NumInst(Instruction):
         self.consts = (num,)
         def numIndex(consts):
             return consts.index(num)
-        self.code = [opmap["LOAD_CONST"],numIndex]
-#                     opmap["NOP"],opmap["NOP"]]
+        self.code = [opmap["LOAD_CONST"],numIndex,
+                     opmap["NOP"],opmap["NOP"]]
 class SymInst(Instruction):
     def __init__(self,sym):
         super(SymInst,self).__init__()
@@ -126,8 +127,8 @@ class SymInst(Instruction):
             else:
                 print( ' undefine variable ')
                 return names.index('DUMMY')
-        self.code = [opmap["LOAD_GLOBAL"],symIndex]
-#                     opmap["NOP"],opmap["NOP"]]
+        self.code = [opmap["LOAD_GLOBAL"],symIndex,
+                     opmap["NOP"],opmap["NOP"]]
 class BinopInst(Instruction):
     tables = {
         '+':opmap["BINARY_ADD"],
