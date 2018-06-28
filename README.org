@@ -2,5 +2,6 @@
     #+BEGIN_SRC python
       # you need define keywords and operators and operator table
       # vtype.py is a simple type 
-
+      # this is learning how compile to python bytecode
+      # learning from https://github.com/nickdrozd/LispPyByCompyler
     #+END_SRC
