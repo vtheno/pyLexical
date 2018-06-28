@@ -1,20 +1,31 @@
 #coding=utf-8
 from datatype import *
+from instructions import *
 class Expr(metaclass=TypeMeta): pass
 class SYM(Expr):
     def __init__(self,sym):
         self.sym = sym
     def __repr__(self):
-        return "({} {})".format(self.__name__,repr(self.sym))
+        return "{}".format(self.sym)
+    @prop
+    def singleStepEval(self):
+        return SymInst(self.sym)
 class NUM(Expr):
     def __init__(self,num):
         self.num = num
     def __repr__(self):
-        return "({} {})".format(self.__name__,repr(self.num))
+        return "{}".format(repr(self.num))
     @prop
     def singleStepEval(self):
-        return self.num
+        return NumInst(self.num)
 class BINOP(Expr):
+    """
+    tables = {'+':lambda a,b:a+b,
+              '-':lambda a,b:a-b,
+              '*':lambda a,b:a*b,
+              '/':lambda a,b:a/b,
+            '==':lambda a,b:1 if a==b else 0,}
+    """
     def __init__(self,l,opname,r):
         self.left = l
         self.opname = opname
@@ -23,13 +34,10 @@ class BINOP(Expr):
         return "({} {} {})".format(self.left,self.opname,self.right)
     @prop
     def singleStepEval(self):
-        tables = {'+':lambda a,b:a+b,
-                  '-':lambda a,b:a-b,
-                  '*':lambda a,b:a*b,
-                  '/':lambda a,b:a/b,
-                  '==':lambda a,b:1 if a==b else 0,}
+        """
+        # old 
         if isinstance(self.left,NUM) and isinstance(self.right,NUM):
-            return NUM( tables[self.opname](self.left.singleStepEval,
+            return NUM( self.tables[self.opname](self.left.singleStepEval,
                                             self.right.singleStepEval) \
                         )
         elif isinstance(self.left,NUM):
@@ -40,6 +48,10 @@ class BINOP(Expr):
             return BINOP(singleStepEval(self.left),
                          self.opname,
                          self.right)
+        """
+        return BinopInst( self.left.singleStepEval,
+                          self.right.singleStepEval,
+                          self.opname)
 class IF(Expr):
     def __init__(self,e1,e2,e3):
         self.cond = e1
@@ -49,23 +61,43 @@ class IF(Expr):
         return "({} {} {} {})".format(self.__name__,self.cond,self.true,self.false)
     @prop
     def singleStepEval(self):
+        """ #old version
         if isinstance(self.cond,NUM):
             return self.true if self.cond.num else self.false
         else: # if isinstance(self.cond,Expr):
             return IF(singleStepEval(self.cond),self.true,self.false)
+        """
+        return IfInst( self.cond.singleStepEval ,
+                       self.true.singleStepEval ,
+                       self.false.singleStepEval )
+class VAL(Expr):
+    def __init__(self,sym,val):
+        self.sym = sym # str
+        self.val = val # Expr
+    def __repr__(self):
+        return "({} {} {})".format(self.__name__,self.sym,self.val)
+    @prop
+    def singleStepEval(self):
+        return ValInst( self.sym,
+                        self.val.singleStepEval )
 def singleStepEval( expr ):
     print( "singleStepEval:",expr )
     if isinstance(expr,IF):
         return expr.singleStepEval
     elif isinstance(expr,BINOP):
         return expr.singleStepEval
+    elif isinstance(expr,VAL):
+        return expr.singleStepEval
     elif isinstance(expr,NUM):
         return expr.singleStepEval
+    elif isinstance(expr,SYM):
+        return expr.singleStepEval
     else:
-        raise RuntimeError
+        raise RuntimeError( "{} ".format(repr(expr)) )
+
 def multStepEval( expr ):
     print( "multStepEval:",expr )
-    if isinstance(expr,NUM):
+    if isinstance(expr,Instruction):
         return expr
     else:
         return multStepEval( singleStepEval(expr) )
@@ -73,5 +105,6 @@ __all__ = ["Expr",
            "BINOP",
            "SYM","NUM",
            "IF",
+           "VAL",
            "singleStepEval","multStepEval"
        ]

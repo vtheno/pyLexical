@@ -19,9 +19,9 @@ def strip( tok : str ,toks : List(str) ) -> List(str) :
 def unpack(lst):
     assert lst != [ ] ,"unpack (nil)"
     return lst[0],lst[1:]
-binops = [ "+","-","*","/","=="]
+binops = [ "+","-","*","=" ]
 operators = [ ] + binops
-keywords = ["if","then","else"]
+keywords = ["if","then","else","val"]
 def IsDigits( lst : List(str) ) -> bool:
     flag = True
     temp = lst
@@ -48,6 +48,12 @@ def IsVariable( s : str ) -> bool:
     return s not in keywords and s not in operators and IsAlpha(list(s) )
 def IsNumber( s : str ) -> bool:
     return IsDigits(list(s))
+def parseSym( toks ):
+    t,rest = unpack(toks)
+    if IsVariable(t):
+        return t,rest
+    else:
+        raise ParseError( "ParseSym: {} , {}".format(t,rest) )
 def parseAtom( toks : List(str) ) -> Tuple(Tuple(str,object),List(str)) :
     t,rest = unpack(toks)
     if t == "if":
@@ -55,6 +61,10 @@ def parseAtom( toks : List(str) ) -> Tuple(Tuple(str,object),List(str)) :
         e2,rest2 = parseExpr( strip("then",rest1) )
         e3,rest3 = parseExpr( strip("else",rest2) )
         return ( IF(e1,e2,e3),rest3 )
+    elif t == "val":
+        sym,rest1 = parseSym( rest )
+        val,rest2 = parseExpr( strip("=",rest1) )
+        return ( VAL(sym,val),rest2 )
     elif IsVariable(t):
         return ( SYM(t),rest )
     elif IsNumber(t):
@@ -84,16 +94,27 @@ def read(inps):
     else:
         raise ParseError( "no parse all: {}".format(implode(rest)) )
 
-inp = """
+"""
+inp = 
 if 1
 then 1 + 2 + 3
 else 1 - 2 - 3
-"""
+
 out = read(inp)
 print( out,"\noutput:",multStepEval(out) )
 p = read( " 1 + 2 - 3 " )
 print( p,"\noutput:",multStepEval(p) )
-
+"""
+from instructions import makefunc
+p = read("""
+if val a = 2 
+then val b = a + 1
+else val c = a + 2
+""")
+o = multStepEval(p)
+print( p ,"\noutput:",o )
+env = {}#{'a':True,'b':1,'c':2}
+print( makefunc(o.makeCode(),env )() )
 #print( isinstance(SYM("A"),SYM) )
 #print( isinstance(SYM("A"),IF) )
 #print( isinstance(SYM("A"),Expr) )
