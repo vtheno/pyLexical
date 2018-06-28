@@ -32,28 +32,6 @@ def IsSeparator( x : str ) -> bool:
 explode = list
 def implode( lst : List(str) ) -> str:
     return ''.join(lst)
-def IsNumber( lst : List(str) ) -> bool:
-    flag = True
-    temp = lst
-    if temp == [ ]:
-        return not flag
-    while temp:
-        x,temp = temp[0],temp[1:]
-        flag = IsDigit(x) and flag
-    return flag
-def IsAlpha( lst : List(str) ) -> bool :
-    flag = True
-    temp = lst
-    if temp == [ ]:
-        return not flag
-    x,temp = temp[0],temp[1:]
-    if IsLetter(x):
-        while temp:
-            x,temp = temp[0],temp[1:]
-            flag = flag and ( IsDigit(x) or IsLetter(x) )
-        return flag
-    else:
-        return False
 def GetSymbol ( spectab , tok, lst ):
     temp = lst
     while temp:
@@ -141,7 +119,6 @@ def Lex(spectab,inp):
 #print( Lex(inp) )
 __all__ = ["Lex","Tokenise",
            "GetNextToken","GetTail","GetSymbol",
-           "IsAlpha","IsNumber",
            "IsSeparator","IsDigit","IsLetter","IsLetterOrDigit",
            "explode","implode",
            "Mem","Get","SpecTab","GetNextTokenErr"]
