@@ -21,7 +21,8 @@ def unpack(lst):
     return lst[0],lst[1:]
 binops = [ "+","-","*","=" ]
 operators = [ ] + binops
-keywords = ["if","then","else","val"]
+keywords = ["if","then","else","let","in"]
+#,"val"]
 def IsDigits( lst : List(str) ) -> bool:
     flag = True
     temp = lst
@@ -61,10 +62,11 @@ def parseAtom( toks : List(str) ) -> Tuple(Tuple(str,object),List(str)) :
         e2,rest2 = parseExpr( strip("then",rest1) )
         e3,rest3 = parseExpr( strip("else",rest2) )
         return ( IF(e1,e2,e3),rest3 )
-    elif t == "val":
+    elif t == "let":
         sym,rest1 = parseSym( rest )
         val,rest2 = parseExpr( strip("=",rest1) )
-        return ( VAL(sym,val),rest2 )
+        body,rest3 = parseExpr( strip("in",rest2) )
+        return ( LET(sym,val,body),rest3 )
     elif IsVariable(t):
         return ( SYM(t),rest )
     elif IsNumber(t):
@@ -107,18 +109,27 @@ print( p,"\noutput:",multStepEval(p) )
 """
 from instructions import makefunc
 p = read("""
-if val a = 1
-then val b = a + 2 
-else val c = b + 3
+let c = let b = let c = 2
+                in if c 
+                   then c + 1 
+                   else c * 0 
+        in b * b
+in c + 1
 """)
 o = multStepEval(p)
 print( p ,"\noutput:",o )
 env = {}#{'a':True,'b':1,'c':2}
 import dis
 code = o.makeCode()
-dis.show_code(code)
-ff = makefunc(code,env)
-print( ff() )
+#dis.dis(code)
+from types import CodeType
+#dis.show_code(code)
+#for c in code.co_consts:
+#    if isinstance(c,CodeType):
+#        dis.dis(c)
+#        print( code.co_consts.index(c) )
+#dis.dis(code)
+print( eval( code ) )
 def genFile(filename,code):
     import marshal
     import struct
@@ -134,7 +145,7 @@ def genFile(filename,code):
         f.write(gen_time)
         f.write(padding)
         f.write(data)
-genFile('mylang.pyc',ff.__code__)
+genFile('mylang.pyc',code)
 #print( isinstance(SYM("A"),SYM) )
 #print( isinstance(SYM("A"),IF) )
 #print( isinstance(SYM("A"),Expr) )

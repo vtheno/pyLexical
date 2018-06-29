@@ -34,8 +34,8 @@ class Instruction(metaclass=TypeMeta):
         self.flags = 0 #int( bytes([0] * 9) )
         self.code = [ ]
         self.consts = set( [None] )
-        self.names = set( ["DUMMY"] )
-        self.varnames = set( )
+        self.names = set(  )
+        self.varnames = set(  )
         self.filename = '<Inst>'
         self.name = name
         self.firstlineno = 1
@@ -97,10 +97,10 @@ class Instruction(metaclass=TypeMeta):
             if type(args) != int:
                 if op is opmap["LOAD_CONST"]:
                     result += [ args(self.consts) ]
-                elif op is opmap["LOAD_GLOBAL"]:
-                    result += [ args(self.names) ]
-                elif op is opmap["STORE_GLOBAL"]:
-                    result += [ args(self.names) ]
+                elif op is opmap["LOAD_FAST"]:
+                    result += [ args(self.varnames) ]
+                elif op is opmap["STORE_FAST"]:
+                    result += [ args(self.varnames) ]
                 else:
                     result += [args]
             else:
@@ -112,7 +112,9 @@ class NumInst(Instruction):
         super(NumInst,self).__init__()
         self.stacksize = 1
         self.consts = (num,)
+        self.flags = 65 # NOFREE OPTIMZED
         def numIndex(consts):
+            print( consts )
             return consts.index(num)
         self.code = [opmap["LOAD_CONST"],numIndex,
                      opmap["NOP"],opmap["NOP"]]
@@ -120,14 +122,11 @@ class SymInst(Instruction):
     def __init__(self,sym):
         super(SymInst,self).__init__()
         self.stacksize = 1
-        self.names.update( sym )
-        def symIndex(names):
-            if sym in names:
-                return names.index(sym)
-            else:
-                print( ' undefine variable ')
-                return names.index('DUMMY')
-        self.code = [opmap["LOAD_GLOBAL"],symIndex,
+        self.varnames.update( sym )
+        self.flags = 65 # NOFREE optimzed
+        def symIndex(varnames):
+            return varnames.index(sym)
+        self.code = [opmap["LOAD_FAST"],symIndex,
                      opmap["NOP"],opmap["NOP"]]
 class BinopInst(Instruction):
     tables = {
@@ -141,6 +140,7 @@ class BinopInst(Instruction):
         self.consts.update ( left.consts ,right.consts )
         self.names.update ( left.names, right.names )
         self.varnames.update ( left.varnames,right.varnames )
+        self.flags = 65 # NOFREE OPTIMZED
         self.code = left.code + \
                     right.code + \
                     [self.tables[opname],0] 
@@ -157,6 +157,7 @@ class IfInst(Instruction):
         self.varnames.update( cond.varnames,
                               true.varnames,
                               false.varnames)
+        self.flags = 65 # NOFREE and OPTIMZED
         '''
         <cond_code>,
         POP_JUMP_IF_FALSE,<false_code>,
@@ -174,23 +175,45 @@ class IfInst(Instruction):
                     [false_label,opmap["NOP"] ] + \
                     false.code
 
-class ValInst(Instruction):
-    def __init__(self,sym,val):
-        super(ValInst,self).__init__()
-        self.consts = val.consts
-        self.freevars = val.freevars
-        self.cellvars = val.freevars
-        self.stacksize = 2
-        self.names = val.names
-        self.names.update(sym)
-        def symIndex(names):
-            return names.index(sym)
-        self.code = val.code + \
-                    [ opmap["DUP_TOP"],0,# copy top of stack
-                      opmap["STORE_GLOBAL"],symIndex,
-                      opmap["LOAD_GLOBAL"],symIndex ]
+class LetInst(Instruction):
+    def __init__(self,sym,val,body):
+        super(LetInst,self).__init__()
+        self.consts = body.consts
+        body.argcount = 1 # 1 sym 
+        _body = body.makeCode() # run code
+        _val = val.makeCode() 
+        self.consts.add( _val )
+        self.consts.add( _body )
+        self.consts.add('<val>')
+        self.consts.add('<body>')
+        self.varnames.update( sym )
+        self.stacksize = body.stacksize + val.stacksize
+        self.flags = 1 # OPTIMZED
+        def bodyIndex(consts):
+            return consts.index(_body)
+        def valIndex(consts):
+            return consts.index(_val)
+        def bIndex(consts):
+            return consts.index('<body>')
+        def vIndex(consts):
+            return consts.index('<val>')
+        def symIndex(varnames):
+            return varnames.index(sym)
+        #opmap["DUP_TOP"],0,# copy top of stack
+        self.code =[ opmap["LOAD_CONST"],valIndex,
+                     opmap["LOAD_CONST"],vIndex,
+                     opmap["MAKE_FUNCTION"],0,
+                     opmap["CALL_FUNCTION"],0,
+                     opmap["LOAD_CONST"],bodyIndex,
+                     opmap["LOAD_CONST"],bIndex,
+                     opmap["MAKE_FUNCTION"],0,
+                     opmap["ROT_TWO"],0,
+                     opmap["CALL_FUNCTION"],1,
+                     opmap["STORE_FAST"],symIndex,
+                     opmap["LOAD_FAST"],symIndex]
+
 __all__ = ["SymInst","NumInst",
-           "ValInst",
+           "LetInst",
            "BinopInst","IfInst",
            "Instruction",
            "makefunc"]

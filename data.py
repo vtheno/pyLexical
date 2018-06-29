@@ -70,23 +70,25 @@ class IF(Expr):
         return IfInst( self.cond.singleStepEval ,
                        self.true.singleStepEval ,
                        self.false.singleStepEval )
-class VAL(Expr):
-    def __init__(self,sym,val):
+class LET(Expr):
+    def __init__(self,sym,val,body):
         self.sym = sym # str
         self.val = val # Expr
+        self.body = body # Expr
     def __repr__(self):
-        return "({} {} {})".format(self.__name__,self.sym,self.val)
+        return "({} {}={} in {})".format(self.__name__,self.sym,self.val,self.body)
     @prop
     def singleStepEval(self):
-        return ValInst( self.sym,
-                        self.val.singleStepEval )
+        return LetInst( self.sym,
+                        self.val.singleStepEval,
+                        self.body.singleStepEval )
 def singleStepEval( expr ):
     print( "singleStepEval:",expr )
     if isinstance(expr,IF):
         return expr.singleStepEval
     elif isinstance(expr,BINOP):
         return expr.singleStepEval
-    elif isinstance(expr,VAL):
+    elif isinstance(expr,LET):
         return expr.singleStepEval
     elif isinstance(expr,NUM):
         return expr.singleStepEval
@@ -105,6 +107,6 @@ __all__ = ["Expr",
            "BINOP",
            "SYM","NUM",
            "IF",
-           "VAL",
+           "LET",
            "singleStepEval","multStepEval"
        ]
