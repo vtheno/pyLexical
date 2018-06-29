@@ -52,6 +52,7 @@ def GetTail(p , buf ,lst ):
             result = [x] + result
             continue
         else:
+            temp = [x] + temp # fix a miss tok
             return ( ''.join(list(reversed(result))),temp )
     return ( ''.join(list(reversed(result))),temp )
 class GetNextTokenErr(Exception) : pass

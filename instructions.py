@@ -187,7 +187,7 @@ class LetInst(Instruction):
         self.consts.add('<val>')
         self.consts.add('<body>')
         self.varnames.update( sym )
-        self.stacksize = body.stacksize + val.stacksize
+        self.stacksize = (body.stacksize + val.stacksize) * 2
         self.flags = 1 # OPTIMZED
         def bodyIndex(consts):
             return consts.index(_body)
