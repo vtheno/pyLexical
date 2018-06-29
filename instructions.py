@@ -114,7 +114,6 @@ class NumInst(Instruction):
         self.consts = (num,)
         self.flags = 65 # NOFREE OPTIMZED
         def numIndex(consts):
-            #print( consts )
             return consts.index(num)
         self.code = [opmap["LOAD_CONST"],numIndex,
                      opmap["NOP"],opmap["NOP"]]
@@ -178,39 +177,40 @@ class IfInst(Instruction):
 class LetInst(Instruction):
     def __init__(self,sym,val,body):
         super(LetInst,self).__init__()
-        self.consts = body.consts
+        #self.consts = body.consts
         body.argcount = 1 # 1 sym 
-        _body = body.makeCode() # run code
-        _val = val.makeCode() 
-        self.consts.add( _val )
-        self.consts.add( _body )
-        self.consts.add('<val>')
-        self.consts.add('<body>')
+
         self.varnames.update( sym )
-        self.stacksize = (body.stacksize + val.stacksize) * 2
+        body.varnames = list(body.varnames)
+        body.varnames = tuple( [sym] + body.varnames ) # order ,varnames is first arguments and locals variabel
+        self.consts.update( val.consts )
+        self.varnames.update( val.varnames )
+        _body = body.makeCode() # run code
+        self.stacksize = body.stacksize
+
+        self.consts.add( _body )
+        self.consts.add('<body>')
+
         self.flags = 1 # OPTIMZED
         def bodyIndex(consts):
             return consts.index(_body)
-        def valIndex(consts):
-            return consts.index(_val)
         def bIndex(consts):
             return consts.index('<body>')
-        def vIndex(consts):
-            return consts.index('<val>')
         def symIndex(varnames):
             return varnames.index(sym)
         #opmap["DUP_TOP"],0,# copy top of stack
-        self.code =[ opmap["LOAD_CONST"],valIndex,
-                     opmap["LOAD_CONST"],vIndex,
-                     opmap["MAKE_FUNCTION"],0,
-                     opmap["CALL_FUNCTION"],0,
+        # opmap["LOAD_CONST"],valIndex,
+        # opmap["LOAD_CONST"],vIndex,
+        # opmap["MAKE_FUNCTION"],0,
+        # opmap["CALL_FUNCTION"],0,
+        self.code = val.code + \
+                    [ opmap["STORE_FAST"],symIndex,
                      opmap["LOAD_CONST"],bodyIndex,
                      opmap["LOAD_CONST"],bIndex,
                      opmap["MAKE_FUNCTION"],0,
-                     opmap["ROT_TWO"],0,
-                     opmap["CALL_FUNCTION"],1,
-                     opmap["STORE_FAST"],symIndex,
-                     opmap["LOAD_FAST"],symIndex]
+                     opmap["LOAD_FAST"],symIndex,
+                     opmap["CALL_FUNCTION"],1,]
+
 
 __all__ = ["SymInst","NumInst",
            "LetInst",

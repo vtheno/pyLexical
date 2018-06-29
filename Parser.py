@@ -121,12 +121,11 @@ def read(inps):
 
 from instructions import makefunc
 string = """
-let c = let b = let c = 2
-                in if c 
-                   then c + 1 
-                   else c * 0 
-        in b + 1 * b
-in c * c
+let a = 2
+in let c = if a - 1
+           then a + a + a
+           else a - a - a
+   in c * c
 """
 #p = read("""2 + 1 * 2""")
 p = read(string)
@@ -137,15 +136,13 @@ print( p ,"\noutput:",o )
 env = {}#{'a':True,'b':1,'c':2}
 import dis
 code = o.makeCode()
-#dis.dis(code)
-from types import CodeType
-#dis.show_code(code)
+dis.dis(code)
+dis.show_code(code)
 #for c in code.co_consts:
 #    if isinstance(c,CodeType):
 #        dis.dis(c)
 #        print( code.co_consts.index(c) )
-dis.dis(code)
-#print( eval( code ) )
+print( eval(code) )
 def genFile(filename,code):
     import marshal
     import struct
@@ -163,7 +160,6 @@ def genFile(filename,code):
         f.write(data)
     print( 'finshed.')
 genFile('mylang.pyc',code)
-print( eval(code) )
 #print( isinstance(SYM("A"),SYM) )
 #print( isinstance(SYM("A"),IF) )
 #print( isinstance(SYM("A"),Expr) )
