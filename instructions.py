@@ -49,7 +49,7 @@ class Instruction(metaclass=TypeMeta):
         self.nlocals = len(self.varnames)
         # varnames is local variable names and function arguments
         self.code += [opmap["RETURN_VALUE"],0]
-        print( self.code )
+        #print( self.code )
         code = CodeType(self.argcount,       # argcount
                         self.kwonlyargcount, # kwonlyargcount
                         self.nlocals,        # nlocals
@@ -114,7 +114,7 @@ class NumInst(Instruction):
         self.consts = (num,)
         self.flags = 65 # NOFREE OPTIMZED
         def numIndex(consts):
-            print( consts )
+            #print( consts )
             return consts.index(num)
         self.code = [opmap["LOAD_CONST"],numIndex,
                      opmap["NOP"],opmap["NOP"]]

@@ -96,17 +96,7 @@ def read(inps):
     else:
         raise ParseError( "no parse all: {}".format(implode(rest)) )
 
-"""
-inp = 
-if 1
-then 1 + 2 + 3
-else 1 - 2 - 3
 
-out = read(inp)
-print( out,"\noutput:",multStepEval(out) )
-p = read( " 1 + 2 - 3 " )
-print( p,"\noutput:",multStepEval(p) )
-"""
 from instructions import makefunc
 p = read("""
 let c = let b = let c = 2
@@ -128,7 +118,7 @@ from types import CodeType
 #    if isinstance(c,CodeType):
 #        dis.dis(c)
 #        print( code.co_consts.index(c) )
-#dis.dis(code)
+dis.dis(code)
 print( eval( code ) )
 def genFile(filename,code):
     import marshal
