@@ -83,7 +83,7 @@ def parseEopt( exp1,toks ):
     if toks == [ ]: 
         return (exp1,toks)
     x,xs = unpack(toks)
-    if x in ['+','-']:
+    if x in ['+','-','==']:
         exp2,rest = parseT(xs)
         return parseEopt( BINOP(exp1,x,exp2) , rest)
     else:
@@ -95,7 +95,7 @@ def parseTopt( exp1,toks ):
     if toks == [ ]:
         return (exp1,toks)
     x,xs = unpack(toks)
-    if x in ['*']:#binops
+    if x in ['*','/']:#binops
         exp2,rest = parseAtom(xs)
         return parseTopt( BINOP(exp1,x,exp2) , rest)
     else:
