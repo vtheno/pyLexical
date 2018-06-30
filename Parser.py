@@ -19,9 +19,9 @@ def strip( tok : str ,toks : List(str) ) -> List(str) :
 def unpack(lst):
     assert lst != [ ] ,"unpack (nil)"
     return lst[0],lst[1:]
-binops = [ "+","-","*"]
-operators = [ "=" ] + binops
-keywords = ["if","then","else","let","in"]
+binops = [ "+","-","*",'/']
+operators = [ "=",'(',')','=>' ] + binops
+keywords = ["if","then","else","let","in","def"]
 #,"val"]
 def IsDigits( lst : List(str) ) -> bool:
     flag = True
@@ -68,6 +68,28 @@ def parseAtom( toks : List(str) ) -> Tuple(Tuple(str,object),List(str)) :
         val,rest2 = parseExpr( strip("=",rest1) )
         body,rest3 = parseExpr( strip("in",rest2) )
         return ( LET(sym,val,body),rest3 )
+    elif t == "def": # def a 1
+        sym,rest1 = parseSym( rest )
+        val,rest2 = parseExpr( rest1 )
+        return ( DEF(sym,val),rest2 )
+    elif t == '(':
+        val,rest1 = parseExpr( rest )
+        if isinstance(val,SYM):
+            sym = val.sym
+            x,xs = unpack(rest1)
+            if x != ')':
+                e2,last = parseExpr( rest1 )
+                return ( APP(val,e2),strip(')',last) )
+            else:
+                body,last = parseExpr ( strip('=>',strip(')',rest1)))
+                return ( FUN(sym,body),last )
+        else:
+            x,xs = unpack(rest1)
+            if x != ')':
+                e2,last = parseExpr( rest1 )
+                return ( APP(val,e2),strip(')',last) )
+            else:
+                return ( val, strip(')',rest1) )
     elif IsVariable(t):
         return ( SYM(t),rest )
     elif IsNumber(t):
@@ -89,20 +111,22 @@ def parseEopt( exp1,toks ):
     else:
         return (exp1,toks)
 def parseT( toks ):
-    exp1,rest1 = parseAtom( toks )
+    exp1,rest1 = parseAtom(toks) #parseAtom( toks )
     return parseTopt(exp1,rest1)
 def parseTopt( exp1,toks ):
     if toks == [ ]:
         return (exp1,toks)
     x,xs = unpack(toks)
     if x in ['*','/']:#binops
-        exp2,rest = parseAtom(xs)
+        exp2,rest = parseAtom (xs)
         return parseTopt( BINOP(exp1,x,exp2) , rest)
     else:
         return (exp1,toks)
+
 """
 E = E binops E  ; binops ['+','-','*','/']
   | Atom
+Atom = Num | SYM | FUN 
 ------------------ |
 E = T Eopt
 Eopt = '+' T Eopt | '-' T Eopt

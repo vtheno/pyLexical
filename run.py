@@ -1,8 +1,8 @@
 #coding=utf-8
 from Parser import *
-from data import multStepEval,emptyEnv
+from data import Eval,Env
 def repl():
-    env = emptyEnv
+    env = Env()
     while 1:
         inputStr = input('>> ')
         if inputStr == ':q':
@@ -10,7 +10,7 @@ def repl():
             break
         try:
             expr = read(inputStr)
-            print( '=>',multStepEval(expr,env) )
+            print( '=>',Eval(expr,env) )
             print( ';;',env )
         except Exception as e:
             print( '\033[0;31;43m',e,'\033[0m' )
