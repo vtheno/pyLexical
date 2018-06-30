@@ -83,7 +83,7 @@ class LET(Expr):
                         self.val.singleStepEval,
                         self.body.singleStepEval )
 def singleStepEval( expr ):
-    print( "singleStepEval:",expr )
+    #print( "singleStepEval:",expr )
     if isinstance(expr,IF):
         return expr.singleStepEval
     elif isinstance(expr,BINOP):
@@ -98,7 +98,7 @@ def singleStepEval( expr ):
         raise RuntimeError( "{} ".format(repr(expr)) )
 
 def multStepEval( expr ):
-    print( "multStepEval:",expr )
+    #print( "multStepEval:",expr )
     if isinstance(expr,Instruction):
         return expr
     else:

@@ -3,8 +3,8 @@ from vtype import *
 from Lexical import *
 #Lex,SpecTab,IsSeparator,IsDigit,IsLetter
 from data import *
-help(Lex)
-print( Lex(SpecTab,"<> >< ") )
+#help(Lex)
+#print( Lex(SpecTab,"<> >< ") )
 class ParseError(Exception): pass
 def strip( tok : str ,toks : List(str) ) -> List(str) :
     #print( "strip:",tok,toks)
@@ -118,45 +118,8 @@ def read(inps):
         return result
     else:
         raise ParseError( "no parse all: {}, {}".format(result,implode(rest)) )
-
-from instructions import makefunc
-string = """
-let a = let c = 2
-        in if c then c + c * c else c - c * c
-in a + 1
-"""
-#p = read("""2 + 1 * 2""")
-p = read(string)
-# output will is 13 ,it's a mistake,
-# fix dispose precedence of operator
-o = multStepEval(p)
-print( p ,"\noutput:",o )
-env = {}#{'a':True,'b':1,'c':2}
-import dis
-code = o.makeCode()
-dis.dis(code)
-#dis.show_code(code)
-print( code.co_cellvars )
-print( eval(code) )
-def genFile(filename,code):
-    import marshal
-    import struct
-    import time
-    import imp
-    import sys
-    magic_number = imp.get_magic()
-    gen_time     = struct.pack('i',int(time.time()))
-    padding      = bytes( [65,0,0,0] ) # 65 0 0 0
-    data         = marshal.dumps(code)
-    with open(filename,'wb') as f:
-        f.write(magic_number)
-        f.write(gen_time)
-        f.write(padding)
-        f.write(data)
-    print( 'finshed.')
-genFile('mylang.pyc',code)
-
 #print( isinstance(SYM("A"),SYM) )
 #print( isinstance(SYM("A"),IF) )
 #print( isinstance(SYM("A"),Expr) )
 #c = SYM("x")
+__all__ = ["read","parse"]

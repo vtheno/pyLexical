@@ -7,7 +7,12 @@ def f():
     def g():
         return a 
     return g
-
+def f():
+    a = 233
+    def local():
+        c = a + 1
+        return c 
+    return local()
 g = f()
 dis.dis(f)
 print( f.__closure__,g.__closure__)
