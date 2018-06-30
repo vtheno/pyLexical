@@ -76,9 +76,11 @@ class Instruction(metaclass=TypeMeta):
             op,args = code[i],code[i+1]
             if op in jumps and type(args) != int:
                 #print( " op in jumps ")
-                index = args(self.code)
-                code[i+1] = index
-                code[index] = opmap["NOP"]
+                name,source = args
+                if name == 'goto':
+                    index = self.code.index(source)
+                    code[i+1] = index
+                    code[index] = opmap["NOP"]
             i+=2
         self.code = code
     def converts(self):
@@ -95,12 +97,23 @@ class Instruction(metaclass=TypeMeta):
             op,args = code[i],code[i+1]
             result += [op]
             if type(args) != int:
-                if op is opmap["LOAD_CONST"]:
-                    result += [ args(self.consts) ]
-                elif op is opmap["LOAD_FAST"]:
-                    result += [ args(self.varnames) ]
-                elif op is opmap["STORE_FAST"]:
-                    result += [ args(self.varnames) ]
+                name,source = args
+                if op is opmap["LOAD_CONST"] and name == 'consts':
+                    result += [ self.consts.index(source) ]
+                elif op is opmap["LOAD_FAST"] and name == 'L_FAST':
+                    result += [ self.varnames.index(source) ]
+                elif op is opmap["STORE_FAST"] and name == 'S_FAST':
+                    result += [ self.varnames.index(source) ]
+                elif op is opmap["LOAD_DEREF"] and name == 'L_REF':
+                    if len(self.cellvars) > 0:
+                        result += [ self.cellvars.index(source) ]
+                    else:
+                        result += [ self.freevars.index(source) ]
+                elif op is opmap["STORE_DEREF"] and name == 'S_REF':
+                    if len(self.cellvars) > 0:
+                        result += [ self.cellvars.index(source) ]
+                    else:
+                        result += [ self.freevars.index(source) ]
                 else:
                     result += [args]
             else:
@@ -113,20 +126,16 @@ class NumInst(Instruction):
         self.stacksize = 1
         self.consts = (num,)
         self.flags = 65 # NOFREE OPTIMZED
-        def numIndex(consts):
-            return consts.index(num)
-        self.code = [opmap["LOAD_CONST"],numIndex,
-                     opmap["NOP"],opmap["NOP"]]
+        self.code = [opmap["LOAD_CONST"],('consts',num),
+                     opmap["NOP"],0]
 class SymInst(Instruction):
     def __init__(self,sym):
         super(SymInst,self).__init__()
         self.stacksize = 1
         self.varnames.update( sym )
         self.flags = 65 # NOFREE optimzed
-        def symIndex(varnames):
-            return varnames.index(sym)
-        self.code = [opmap["LOAD_FAST"],symIndex,
-                     opmap["NOP"],opmap["NOP"]]
+        self.code = [opmap["LOAD_FAST"],('L_FAST',sym),
+                     opmap["NOP"],0]
 class BinopInst(Instruction):
     tables = {
         '+':opmap["BINARY_ADD"],
@@ -157,61 +166,54 @@ class IfInst(Instruction):
                               true.varnames,
                               false.varnames)
         self.flags = 65 # NOFREE and OPTIMZED
-        '''
-        <cond_code>,
-        POP_JUMP_IF_FALSE,<false_code>,
-        <true_code>,
-        <false_code>,
-        '''
         false_label = makeLabel()
-        def falseLabel(code):
-            return code.index(false_label)
         self.code = cond.code + \
-                    [opmap["POP_JUMP_IF_FALSE"],falseLabel,
-                     opmap["NOP"],opmap["NOP"] ] + \
+                    [opmap["POP_JUMP_IF_FALSE"],('goto',false_label),
+                     opmap["NOP"],0 ] + \
                     true.code + \
                     [opmap["JUMP_FORWARD"],len(false.code) + 2] + \
-                    [false_label,opmap["NOP"] ] + \
+                    [false_label,0 ] + \
                     false.code
 
 class LetInst(Instruction):
     def __init__(self,sym,val,body):
         super(LetInst,self).__init__()
-        #self.consts = body.consts
-        body.argcount = 1 # 1 sym 
-
-        self.varnames.update( sym )
-        body.varnames = list(body.varnames)
-        body.varnames = tuple( [sym] + body.varnames ) # order ,varnames is first arguments and locals variabel
-        self.consts.update( val.consts )
-        self.varnames.update( val.varnames )
+        self.cellvars = [ sym ] 
+        body.freevars = list(body.freevars) + [ sym ]
+        i,length = 0,len(body.code)
+        while i < length:
+            op,args = body.code[i],body.code[i+1]
+            if op in [opmap["LOAD_FAST"],opmap["STORE_FAST"]] and type(args) != int:
+                name,source = args
+                if name == 'L_FAST' and source == sym:
+                    body.code[i] = opmap["LOAD_DEREF"]
+                    body.code[i+1] = ('L_REF',source)
+                elif name == 'S_FAST' and source == sym:
+                    body.code[i] = opmap["STORE_DEREF"]
+                    body.code[i+1] = ('S_REF',source)
+            i+=2
         _body = body.makeCode() # run code
+        _val = val.makeCode() 
         self.stacksize = body.stacksize
-
+        self.consts.add( _val )
         self.consts.add( _body )
         self.consts.add('<body>')
-
-        self.flags = 1 # OPTIMZED
-        def bodyIndex(consts):
-            return consts.index(_body)
-        def bIndex(consts):
-            return consts.index('<body>')
-        def symIndex(varnames):
-            return varnames.index(sym)
-        #opmap["DUP_TOP"],0,# copy top of stack
-        # opmap["LOAD_CONST"],valIndex,
-        # opmap["LOAD_CONST"],vIndex,
-        # opmap["MAKE_FUNCTION"],0,
-        # opmap["CALL_FUNCTION"],0,
-        self.code = val.code + \
-                    [ opmap["STORE_FAST"],symIndex,
-                     opmap["LOAD_CONST"],bodyIndex,
-                     opmap["LOAD_CONST"],bIndex,
-                     opmap["MAKE_FUNCTION"],0,
-                     opmap["LOAD_FAST"],symIndex,
-                     opmap["CALL_FUNCTION"],1,]
-
-
+        self.consts.add('<val>')
+        self.flags = 19 # OPTIMZED
+        self.code = [ opmap["LOAD_CONST"],('consts',_val),
+                      opmap["LOAD_CONST"],('consts','<val>'),
+                      opmap["MAKE_FUNCTION"],0,
+                      opmap["CALL_FUNCTION"],0,
+                      opmap["STORE_DEREF"],('S_REF',sym),
+                      opmap["LOAD_CLOSURE"],0,
+                      opmap["BUILD_TUPLE"],1,
+                      # opmap["DUP_TOP"],0,    # debug
+                      # opmap["PRINT_EXPR"],0, # debug
+                      opmap["LOAD_CONST"],('consts',_body),
+                      opmap["LOAD_CONST"],('consts','<body>'),
+                      opmap["MAKE_FUNCTION"],8, # 0x8 -> cellvars and closure
+                      opmap["CALL_FUNCTION"],0,
+                    ]
 __all__ = ["SymInst","NumInst",
            "LetInst",
            "BinopInst","IfInst",
