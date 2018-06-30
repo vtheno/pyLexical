@@ -175,6 +175,7 @@ class IfInst(Instruction):
         self.varnames.update( cond.varnames,
                               true.varnames,
                               false.varnames)
+        #self.cellvars.update( true.cellvars,false.cellvars )
         self.flags = 65 # NOFREE and OPTIMZED
         jump_label = makeLabel()
         self.code = cond.code + \
@@ -183,8 +184,6 @@ class IfInst(Instruction):
                     [opmap["JUMP_FORWARD"],len(false.code) + 2] + \
                     [jump_label,0 ] + \
                     false.code
-
-
 class LetInst(Instruction):
     def __init__(self,sym,val,body):
         super(LetInst,self).__init__()
@@ -193,24 +192,10 @@ class LetInst(Instruction):
         self.stacksize = body.stacksize
         self.consts.update( val.consts , body.consts )
         self.cellvars.update( body.cellvars )
-
         self.flags = 65 # OPTIMZED
         self.code = val.code + \
                     [ opmap["STORE_DEREF"],('S_REF',sym), ] + \
                     body.code 
-        """
-                      #opmap["DUP_TOP"],0,    # debug
-                      #opmap["PRINT_EXPR"],0, # debug
-                      opmap["LOAD_CLOSURE"],0,
-                      opmap["BUILD_TUPLE"],1,
-                      #opmap["DUP_TOP"],0,    # debug
-                      #opmap["PRINT_EXPR"],0, # debug
-                      opmap["LOAD_CONST"],('consts',_body),
-                      opmap["LOAD_CONST"],('consts','<body>'),
-                      opmap["MAKE_FUNCTION"],8, # 0x8 -> cellvars and closure
-                      opmap["CALL_FUNCTION"],0,
-                    ]
-        """
 class MainInst(Instruction):
     def __init__(self,code):
         super(MainInst,self).__init__()

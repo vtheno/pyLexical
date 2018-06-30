@@ -9,7 +9,7 @@ class ParseError(Exception): pass
 def strip( tok : str ,toks : List(str) ) -> List(str) :
     #print( "strip:",tok,toks)
     if toks == [ ]:
-        raise ParseError("strip nil ,{}".format(toks))
+        raise ParseError("strip error ,rest is nil \n tok: {} rest: {}".format(repr(tok),toks))
     else:
         x,xs = toks[0],toks[1:]
         if tok == x:
@@ -73,7 +73,7 @@ def parseAtom( toks : List(str) ) -> Tuple(Tuple(str,object),List(str)) :
     elif IsNumber(t):
         return ( NUM(int(t)),rest )
     else:
-        raise ParseError ("ParseAtom: {} , {}".format(t,rest))
+        raise ParseError ("ParseAtomError: no match {} , {}".format(repr(t),rest))
 def parseExpr( toks ):
     #exp1,rest1 = parseAtom( toks )
     #return parseRest(exp1,rest1)
@@ -117,7 +117,10 @@ def read(inps):
     if rest == [ ]:
         return result
     else:
-        raise ParseError( "no parse all: {}, {}".format(result,implode(rest)) )
+        out = implode(rest)
+        raise ParseError( "readError:\nno parse all ,error in there: \n {} \n index: {}, {}".format(repr(inps),
+                                                                                        len(inps) - len(out),
+                                                                                        out) )
 #print( isinstance(SYM("A"),SYM) )
 #print( isinstance(SYM("A"),IF) )
 #print( isinstance(SYM("A"),Expr) )
